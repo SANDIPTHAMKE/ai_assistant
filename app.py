@@ -1,5 +1,6 @@
 import os
 import webbrowser
+import subprocess
 import pyautogui
 import time
 from flask import Flask, request, jsonify
@@ -7,21 +8,19 @@ import openai
 
 app = Flask(__name__)
 
-# Replace with your OpenAI API key
 openai.api_key = "your_openai_api_key"
 
-# System app commands (Modify if needed)
+# System app commands (Modify paths if needed)
 APP_COMMANDS = {
-    "notepad": "notepad" if os.name == "nt" else "gedit",
-    "calculator": "calc" if os.name == "nt" else "gnome-calculator",
-    "terminal": "cmd" if os.name == "nt" else "gnome-terminal",
-    "browser": "start chrome" if os.name == "nt" else "firefox",
-    "word": "start winword",
-    "excel": "start excel",
-    "powerpoint": "start powerpnt"
+    "word": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+    "excel": "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE",
+    "powerpoint": "C:\\Program Files\\Microsoft Office\\root\\Office16\\POWERPNT.EXE",
+    "notepad": "notepad",
+    "calculator": "calc",
+    "terminal": "cmd"
 }
 
-# List of common websites
+# Common website URLs
 WEBSITES = {
     "google": "https://www.google.com",
     "youtube": "https://www.youtube.com",
@@ -36,22 +35,22 @@ def process():
     user_text = data.get("text").lower()
 
     # Open a website
-    for site in WEBSITES:
+    for site, url in WEBSITES.items():
         if f"open {site}" in user_text:
-            webbrowser.open(WEBSITES[site])
+            webbrowser.open(url)
             return jsonify({"reply": f"Opening {site}..."})
 
     # Open a system app
-    for app in APP_COMMANDS:
+    for app, command in APP_COMMANDS.items():
         if f"open {app}" in user_text:
-            os.system(APP_COMMANDS[app])
+            subprocess.Popen(command, shell=True)  # Use subprocess instead of os.system
             return jsonify({"reply": f"Opening {app}..."})
 
     # Start live dictation in Word
     if "start dictation" in user_text:
-        os.system(APP_COMMANDS["word"])  # Open Word
+        subprocess.Popen(APP_COMMANDS["word"], shell=True)  # Open Word
         time.sleep(5)  # Wait for Word to open
-        pyautogui.hotkey("win", "h")  # Open Windows speech-to-text
+        pyautogui.hotkey("win", "h")  # Start Windows speech-to-text
         return jsonify({"reply": "Starting live dictation in Word..."})
 
     # Use AI for general responses
